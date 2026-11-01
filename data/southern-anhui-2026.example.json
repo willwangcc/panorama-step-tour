@@ -1,0 +1,30 @@
+{
+  "id": "southern-anhui-2026",
+  "title": "皖南 · October 2026",
+  "status": "awaiting-source-photo-audit",
+  "places": [
+    {
+      "id": "bishan",
+      "name": "碧山",
+      "viewpointIds": []
+    },
+    {
+      "id": "hongcun",
+      "name": "宏村",
+      "viewpointIds": []
+    },
+    {
+      "id": "qiyunshan",
+      "name": "齐云山",
+      "viewpointIds": []
+    },
+    {
+      "id": "pingshan",
+      "name": "屏山",
+      "viewpointIds": []
+    }
+  ],
+  "viewpoints": [],
+  "edges": [],
+  "notes": "Place names are user-supplied itinerary labels. GPS, panorama geometry, images and edges are intentionally unpopulated."
+}
