@@ -1,62 +1,44 @@
-# Panorama Step Tour
+# 皖南 · 空间漫游
 
-**360° photos → spatially connected places → a navigable web experience.**
+Southern Anhui — A Spatial Journey. Local-first, real DJI 360° aerial photography, built with Vite, Pannellum and Leaflet. Original SD-card files are read-only and never served or uploaded.
 
-This is the standalone evolution of [Demo Gallery's Panorama Step Tour](https://github.com/willwangcc/demo-gallery/tree/main/demos/panorama-step-tour). It intentionally separates a reusable viewer/engine from real-world geographic datasets.
+## Run locally
 
-## Current MVP
-
-- Interactive 360° equirectangular panoramas
-- Multiple viewpoints connected by click-to-walk hotspots
-- Drag/touch look-around, zoom, fullscreen, autorotation, scene transitions, route thumbnails
-- Add 2–12 local panorama photos for an in-browser tour; place forward hotspots manually
-- A two-scene curated sample from [Pannellum's tour](https://pannellum.org/documentation/examples/tour/)
-
-**Boundary:** This is a connected multi-viewpoint *photo tour*, not photogrammetric 3D reconstruction. Sequential links are guesses until coordinates/bearings are reviewed.
-
-## Local DJI photo audit
-
-Run on your Mac after providing the source folder to Codex:
-
-```bash
-npm run audit:photos -- "/absolute/path/to/黟县"
+```sh
+npm ci
+npm run audit:photos -- "/Volumes/EOS_DIGITAL/黟县"
+npm run process:photos
+npm run dev -- --host 127.0.0.1
 ```
 
-This **does not upload, resize, modify or commit** any original image. It writes ignored local `reports/audit.json` and `reports/audit.csv` with sizes, aspect ratios, geographic filename groups and GPano/XMP clues. Optional `exiftool` (install separately if you want detailed GPS/altitude/heading metadata) enriches the same report. Treat a 2:1 JPEG as a **candidate**, not automatically verified 360° imagery. Keep generated reports private because they can contain exact GPS.
+Open http://127.0.0.1:5173/. Generated media stays usable after ejecting the SD card. Default audit source is the directory above. All scripts run from the repository root.
 
-## Development
+## Experience
 
-Requires Node.js 20+.
+- Full-screen real panorama landing, then a minimal local scene rail.
+- Drag / touch rotation, wheel and button zoom, slow auto rotation and fullscreen (browser-dependent on iOS).
+- Regional GPS map and 31-place directory. Map tiles need Internet; the directory and imagery run locally.
+- GPS-derived aerial neighbors; dashed hotspots explicitly indicate provisional directions. These are camera-location jumps, not ground walking routes or reconstructed 3D movement.
+- Direction editor: rotate until a destination is in the center, choose the connection, save. Local storage persists calibration; export/import JSON transfers it. Test calibrations are cleared by the automated test.
+- Hash URLs identify viewpoints. Back returns through visited scenes, nearest advances to the closest qualifying viewpoint.
 
-```bash
-npm install
-npm run dev
-npm run build
-npm run preview
+## Media
+
+The audited dataset contains 71 GPano-tagged full equirectangular JPEGs, 71 GPS positions, and 31 filename-derived place labels. No reliable GPano north heading exists. Gimbal yaw is preserved only as an **unverified estimate**. Source files total 4.57 GiB; 213 derivatives total approximately 336 MiB.
+
+`reports/` contains the local audit JSON/CSV, processing logs, browser report and screenshots. `public/generated/` contains the manifest, cache and JPEGs. Both directories are ignored by Git. A fresh clone must run the pipeline before the viewer can load.
+
+Processing is serial with bounded Sharp cache/concurrency. Each original produces 6144px and 4096px wide 2:1 JPEGs plus a 480px thumbnail. EXIF is stripped from derivatives; metadata stays in the local manifest. Completed results are reused when filename, size, mtime and pipeline version match. Partial output is written to `.tmp` and renamed only after successful encoding. Failed/unknown projections are recorded, never stretched to fake a sphere. macOS `._` resource forks are excluded.
+
+## Verify
+
+```sh
+npm run check
+npm run verify:media
+# Start the dev server first; requires installed Google Chrome:
+npm run test:browser
 ```
 
-Vite produces `dist/`; configure a standalone Vercel project with the default Vite settings. The existing Demo Gallery remains untouched during extraction.
+Browser checks cover actual imagery, hotspot navigation, drag/zoom, fullscreen, calibration round-trip, regional/local switching, mobile viewport/touch, no initial eager panorama fetch, all 213 image URLs and uncaught JS errors. Mobile testing uses Chromium iPhone emulation, not physical iPhone Safari.
 
-## The first dataset: Southern Anhui, October 2026
-
-The planned source set contains 71 DJI JPEG files totaling ~4.9 GB. The **originals live locally and must not be committed to Git**. They cover 黟县火车站、碧山、南屏、宏村、屏山、卢村、塔川、木坑林海、齐云山 and additional sites. Some places (e.g. 齐云山) are outside 黟县, so the geographic umbrella is **Southern Anhui / 皖南**, not every file is physically in Yi County.
-
-Before import:
-1. **Audit real files:** width/height, EXIF GPS/altitude/camera heading, GPano/XMP, timestamps, thumbnails; do not infer 360° from `_D.JPG`.
-2. **Classify:** ready-to-view 2:1 equirectangular panoramas, stitchable photo groups, ordinary aerial stills, unusable/ambiguous images.
-3. **Optimize:** generate web-ready derivatives and thumbnails, preserve a manifest of original metadata and provenance; keep 4.9 GB originals outside Git.
-4. **Organize:** region → place → viewpoint. Use a map for distant locations, and local **step connections only for physically adjacent viewpoints**.
-5. **Deploy:** publish web images to a suitable asset host; set manifest URLs and deploy a separate Vercel project.
-6. **Review:** manually verify bearings, north alignment, hotspot transitions and GPS privacy before publishing.
-
-See `docs/architecture.md` for the production model and `data/README.md` for the manifest format.
-
-## Open-source reference / attribution
-
-The built-in two-image example is linked from the [Pannellum virtual tour example](https://pannellum.org/documentation/examples/tour/); photography credited to Matthew Petroff under CC BY-SA 3.0 as stated in the [Pannellum repository](https://github.com/mpetroff/pannellum#license). No example photo binary is checked into this repository. Pannellum's viewer library is MIT-licensed and loaded through its versioned CDN.
-
-Uploads are browser-local Blob URLs; no server receives the user's files. Reloading discards the tour.
-
-## Migration
-
-Extracted from `willwangcc/demo-gallery/demos/panorama-step-tour` (original PR #29). The gallery version is preserved for compatibility until its own metadata can link to the standalone project.
+No deployment or raw-photo upload is part of this project setup. Multiresolution tiles and visually verified north calibration remain future improvements.

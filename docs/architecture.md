@@ -1,72 +1,30 @@
-# Architecture — Southern Anhui spatial walk
+# Local panorama architecture
 
-## North star
+## Data flow
 
-```text
-Local DJI originals (4.9 GB; 71 JPGs)
-  └─ Audit: photo type, panorama projection, width/height, GPS, altitude, heading, time
-      ├─ Full equirectangular 360° → panorama node
-      ├─ Stitchable shot sequence → stitch/review → panorama node
-      └─ Ordinary aerial photograph → map gallery / location thumbnail (NOT fake 360°)
-          └─ Optimize to web variants + thumbnails
-              └─ Geographic tour manifest
-                  ├─ Regional map → Places (macro jumps)
-                  └─ Place graph → Nearby viewpoints (step navigation)
-                      └─ Vite / Pannellum viewer → Vercel
-```
+Read-only originals → `audit-photos.mjs` → ignored `reports/audit.json` → `process-photos.mjs` → ignored `public/generated/manifest.json` + media → static Vite app.
 
-## Roles, mental models and acceptance gates
+The audit checks JPEG dimensions and GPano projection evidence and invokes the npm-bundled ExifTool for GPS, time, altitude and XMP fields. Projection metadata is retained per image. Processing permits only verified full equirectangular images, preserves 2:1 dimensions, and records failures. Incremental cache keys include source size/mtime and processing recipe version.
 
-- **Spatial media engineer (photogrammetry):** correct camera model and projection before rendering. GPS is a location clue, **not** a reconstructed 3D point cloud.
-- **GIS/geospatial engineer:** graph nodes are camera centers, not generic place names; use GPS/altitude/bearings where available, never invent precise edges.
-- **Graphics/frontend engineer:** view transforms, smooth transitions, pano tile levels, touch controls, robustness; Pannellum is suitable for 360° waypoint tours.
-- **Media pipeline engineer:** content audit → web derivatives → CDNs/object storage → integrity and bandwidth; avoid pushing raw 4.9 GB into Git or assuming 71 huge files are cheap to serve.
-- **Experience designer:** region → place → viewpoint, map for distant jumps and ground/air waypoint arrows only for genuinely adjacent views.
+## Spatial semantics
 
-## Distinguish three different things
+`src/lib/spatial.js` computes WGS84 great-circle distances and initial bearings. Each node considers at most three nearest nodes with the same filename-derived place label, horizontal distance 3–350 m and absolute altitude difference ≤100 m when available. The resulting 85 **directed candidate edges** are spatial proximity evidence, not proof of an unobstructed flight or walk. Other viewpoints remain accessible through the regional directory and scene rail.
 
-| Mode | Input | Viewer | Navigation |
-|---|---|---|---|
-| Map + aerial stills | Ordinary JPG | Image cards or geolocated pins | Switch locations, not 360° |
-| Connected 360° panoramas | Complete 2:1 equirectangular images | Pannellum | Turn head/camera in place; click nearby viewpoint |
-| Photogrammetric free-flight | Dense overlapping multi-view shots / calibrated capture | Three.js / splats / mesh | Free movement with actual parallax |
+Yaw = geographic bearing − panorama north heading, wrapped to [-180,180). GPano PoseHeading, if available, is the preferred heading. This dataset lacks it: gimbal yaw is explicitly an unverified estimate, shown as dashed “待校准” hotspots. Pitch uses altitude difference / horizontal distance. GPS/altitude and headings are not fabricated. Unknown yaw means no positioned hotspot. All edges preserve review status.
 
-**Do not label distant-place slideshow navigation as physical step-by-step movement.** The first real production experience should have both regional place navigation and local within-place step routes.
+Manual corrections store per-edge yaw/pitch with a manual review status. They do not certify the whole panorama's true north. Scene transitions preserve geographic heading only when both source/destination have trustworthy pose headings; otherwise they preserve relative view angle without claiming world alignment. Back follows visit history; regional jumps are separate from local neighbor navigation.
 
-## Recommended repository layout
+## Browser modules
 
-```text
-panorama-step-tour/
-├── index.html
-├── src/
-│   ├── main.js                    # extracted proof-of-concept viewer
-│   └── style.css
-├── data/
-│   ├── README.md                  # manifest contract
-│   └── southern-anhui-2026.example.json
-├── docs/
-│   └── architecture.md
-├── scripts/                       # future asset audit + processing commands
-├── .github/workflows/ci.yml
-└── package.json
-```
+- `src/main.js`: manifest loading, scene state/history, UI, bounded loading/error feedback, calibration persistence/export/import.
+- `src/lib/viewer.js`: Pannellum scenes, hotspot callbacks, target preload with progress, fades. Only the active panorama is loaded; thumbnails use lazy loading. Desktop 6144px/mobile 4096px selection occurs at initialization.
+- `src/lib/explorer.js`: Leaflet map with GPS markers, OSM attribution and tile-error fallback. Directory remains available if tiles fail.
+- `src/style.css`: cinematic landscape-led layout, touch/mobile sizing, reduced-motion handling.
 
-**Later** extract viewer functions into `src/viewer/`, add `src/data/` and `src/components/`. Avoid refactoring before source photo classification proves the need.
+All runtime libraries are bundled locally; only map tiles require Internet. No backend, credentials, paid API or original-media URL is needed.
 
-## Data ingestion contract (next phase)
+## Limits
 
-1. Local Codex inspects **actual** photos with ExifTool / image metadata tools.
-2. Persist audit JSON with filename, 2D dimensions, file size, GPS lat/lon, altitude, heading, timestamp and GPano tags. Keep exact GPS reports local until publication consent.
-3. Group by site and distance/heading; require user review to confirm accurate movement directions. Timestamp order is **not** spatial adjacency.
-4. Generate 2K–8K optimized panoramas (ideally multires tiles), JPEG/WebP thumbnails and checksum manifest. If images are large, host them on Vercel Blob / R2 / an image CDN, not in Git.
-5. Create `data/southern-anhui-2026.json` with places, viewpoint URLs, coordinates and validated edges.
-6. Validate: 360° seam, sky/nadir, true north, neighbor arrows, direct URL refresh, load speed on mobile, GPS/privacy.
-7. Deploy standalone Vercel site from `willwangcc/panorama-step-tour`.
+31 place labels come from filenames and include nearby sublocations; they are not claimed to be 31 independently verified administrative villages. Missing links are intentional when points exceed limits. First version uses optimized single-resolution images with small previews, not tiled multiresolution. Physical iPhone Safari and human visual calibration remain unverified.
 
-## Explicit v1 success criteria
-
-- A location selector covers the real itinerary, even if some places only have ordinary photos.
-- At least one place offers **two or more real, nearby 360° vantage points** with correct forward/back links.
-- User can drag, rotate and switch viewpoints on desktop and mobile.
-- Shared link works without access to user's original 4.9 GB folder.
-- Raw assets are not committed; attribution and spatial accuracy are checked.
+Pannellum API reference: https://pannellum.org/documentation/api/
