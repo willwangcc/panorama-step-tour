@@ -1,104 +1,118 @@
 <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#09141a" />
-  <meta name="description" content="Step inside real 360° panoramas. Upload your own photographs and create a connected walkthrough." />
-  <title>Waypoint — Panorama Step Tour</title>
-  <link rel="preconnect" href="https://pannellum.org" crossorigin />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.7/build/pannellum.css" />
-  <link rel="stylesheet" href="./src/style.css" />
-</head>
-<body>
-  <div class="app">
-    <div id="panorama" class="panorama" aria-label="Interactive 360-degree photograph"></div>
-    <div class="viewer-shade" aria-hidden="true"></div>
-    <div id="viewerLoading" class="loading-screen" role="status">
-      <div class="loading-ring"></div>
-      <div class="loading-label">OPENING THE SPACE</div>
-    </div>
-    <div class="chrome">
-      <header class="topbar">
-        <a class="brand" href="https://pannellum.org/" target="_blank" rel="noopener noreferrer" aria-label="Powered by Pannellum">
-          <span class="brand-mark"><span></span></span>
-          <span class="brand-name">WAYPOINT<span class="brand-dot">.</span></span>
-        </a>
-        <div class="top-center"><span class="live-dot"></span><span id="tourMode">CURATED FIELD WALK</span></div>
-        <div class="top-actions">
-          <span class="desktop-note">360° SPATIAL STUDIES / NO. 001</span>
-          <button id="openEditor" class="create-button" type="button"><span>＋</span> Create your tour</button>
-        </div>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#182723" />
+    <meta
+      name="description"
+      content="以真实 DJI 航拍全景，探索皖南的村落、湖水与山野。"
+    />
+    <title>皖南 · 空间漫游</title>
+  </head>
+  <body>
+    <div id="app" class="landing">
+      <div id="panorama" aria-label="可拖动的 360 度皖南全景"></div>
+      <div class="shade"></div>
+      <header>
+        <button id="home" class="brand" aria-label="返回总览">
+          <span class="seal">皖</span
+          ><span
+            >皖南 <i> / </i> 空间漫游<small
+              >SOUTHERN ANHUI · FIELD NOTES</small
+            ></span
+          ></button
+        ><button id="explore" class="outline">区域探索 <span>↗</span></button>
       </header>
-      <div class="vertical-mark" aria-hidden="true">EXPLORE BEYOND THE FRAME — 360°</div>
-      <div class="guidance" id="controlHint"><span class="guidance-icon">↔</span><span>DRAG TO LOOK AROUND <b>·</b> SCROLL TO ZOOM</span></div>
-      <main class="lower-panel">
-        <div class="scene-summary">
-          <div class="eyebrow"><span class="tiny-dot"></span> CURRENT VIEWPOINT <span id="sceneCounter">01 / 02</span></div>
-          <h1 id="sceneTitle">Mason Circle<span class="title-accent">.</span></h1>
-          <p id="sceneDescription">A different position. A different perspective.</p>
-          <div class="source-row">
-            <span class="source-icon">◎</span>
-            <a id="sceneSource" href="https://pannellum.org/documentation/examples/tour/" target="_blank" rel="noopener noreferrer">Sample photographs · Matthew Petroff · CC BY-SA 3.0 ↗</a>
-          </div>
-        </div>
-        <div class="waypoint-panel">
-          <div class="rail-topline">
-            <span>YOUR ROUTE <span class="route-dot">●</span> <span id="sceneCount">2 WAYPOINTS</span></span>
-            <span id="sceneProgress">01 / 02</span>
-          </div>
-          <div class="scene-rail" id="sceneRail" aria-label="Choose a viewpoint"></div>
-          <div class="route-footer">
-            <div class="route-legend"><span class="line-sample"></span> CONNECTED PANORAMAS</div>
-            <div class="route-controls">
-              <button id="prevBtn" aria-label="Previous viewpoint" title="Previous viewpoint" type="button">←</button>
-              <button id="nextBtn" aria-label="Next viewpoint" title="Next viewpoint" type="button">→</button>
-            </div>
-          </div>
+      <div class="edition">CHINA / ANHUI<br />2026 · OCTOBER</div>
+      <main id="intro">
+        <div class="eyebrow">山水之间，另一个视角</div>
+        <h1>在皖南，<br />换个角度<span>看世界。</span></h1>
+        <p>Southern Anhui — A Spatial Journey</p>
+        <div class="intro-bottom">
+          <button id="enter" class="primary">进入漫游 <span>→</span></button
+          ><span id="counts">正在读取影像档案</span>
         </div>
       </main>
-      <div class="right-tools" aria-label="Panorama controls">
-        <button id="autoBtn" type="button" title="Toggle auto rotation" aria-label="Toggle auto rotation"><span id="autoIcon">↻</span></button>
-        <span class="tool-divider"></span>
-        <button id="zoomInBtn" type="button" title="Zoom in" aria-label="Zoom in">＋</button>
-        <button id="zoomOutBtn" type="button" title="Zoom out" aria-label="Zoom out">−</button>
-        <span class="tool-divider"></span>
-        <button id="fullBtn" type="button" title="Toggle fullscreen" aria-label="Toggle fullscreen">⛶</button>
+      <div class="tools">
+        <button id="rotate" aria-label="自动旋转" aria-pressed="false">↻</button
+        ><button id="zoomIn" aria-label="放大">＋</button
+        ><button id="zoomOut" aria-label="缩小">−</button
+        ><button id="fullscreen" aria-label="全屏">⛶</button>
       </div>
-      <div class="page-footnote"><span class="footnote-line"></span> A VIEWPOINT IS NOT A 3D MODEL</div>
-    </div>
-    <div id="editorOverlay" class="editor-overlay" hidden>
-      <div id="editorBackdrop" class="editor-backdrop"></div>
-      <section class="editor" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
-        <div class="editor-header">
-          <span class="editor-kicker">WAYPOINT / BUILD MODE</span>
-          <button id="closeEditor" class="editor-close" type="button" aria-label="Close editor">×</button>
+      <section id="tourHud">
+        <div class="scene-heading">
+          <div class="eyebrow" id="sceneIndex"></div>
+          <h2 id="sceneTitle"></h2>
+          <p id="sceneMeta"></p>
+          <span id="accuracy" class="accuracy"></span>
         </div>
-        <div class="editor-body">
-          <div class="editor-number">01 — CREATE A ROUTE</div>
-          <h2 id="editorTitle">Turn photographs<br />into <em>places.</em></h2>
-          <p class="editor-description">Drop two or more true 360° photos. We’ll connect them in order and give you a place to start walking.</p>
-          <label id="dropZone" class="drop-zone" for="fileInput">
-            <span class="upload-art">◎<span class="upload-plus">+</span></span>
-            <strong>Drop 360° images here</strong>
-            <span>or click to choose from your device</span>
-            <small>JPG / PNG / WEBP · EQUIRECTANGULAR 2:1 · 2–12 PHOTOS</small>
-          </label>
-          <input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden />
-          <div class="upload-result" id="uploadResult" role="status" aria-live="polite"></div>
-          <div class="editor-separator"><span></span> OR EXPLORE THE DEMO <span></span></div>
-          <button id="resetSample" class="sample-button" type="button"><span>↗</span> Restore curated sample <span>→</span></button>
-          <div class="editor-number editor-number-secondary">02 — AIM THE CONNECTION</div>
-          <p class="editor-small">After uploading, face where you would walk next. Select <strong>Place next waypoint</strong> to move that scene’s navigation hotspot to your current view direction.</p>
-          <button id="placeNextBtn" class="placement-button" type="button" disabled>⌖ &nbsp; Place next waypoint</button>
-          <p id="placementTip" class="placement-tip">Load your own panoramas to enable directional editing.</p>
-          <div class="editor-privacy">LOCAL ONLY <span>✦</span> Your photos never leave this browser. Refreshing clears them.</div>
+        <div class="route">
+          <div class="route-top">
+            <span>此地的视角 <b id="localCount"></b></span
+            ><button id="calibrate">校准方向 ⌖</button>
+          </div>
+          <div id="rail" class="rail" aria-label="当前地点拍摄点"></div>
+          <div class="route-bottom">
+            <button id="back" aria-label="返回上个拍摄点">← 返回</button>
+            <div id="neighbors"></div>
+            <button id="next" aria-label="前往最近拍摄点">邻近 →</button>
+          </div>
         </div>
       </section>
+      <footer>
+        <span id="location">真实航拍 / 360°</span
+        ><span>拖动环顾 · 滚轮缩放</span
+        ><span class="credit">DJI PANORAMA ARCHIVE</span>
+      </footer>
+      <div id="loading" role="status" hidden>
+        <span class="spinner"></span><span id="loadingText">正在进入全景…</span>
+      </div>
+      <div id="error" role="alert" hidden>
+        <h2>暂时无法打开影像</h2>
+        <p id="errorText"></p>
+        <button id="retry">重新加载</button>
+      </div>
+      <dialog id="explorer">
+        <div class="dialog-top">
+          <div>
+            <span class="eyebrow">THE REGIONAL ATLAS</span>
+            <h2>一地，一重风景。</h2>
+          </div>
+          <button data-close aria-label="关闭区域探索">×</button>
+        </div>
+        <p class="muted">跨地点跳转 · 选择地图上的拍摄地，或从目录出发。</p>
+        <div id="map" aria-label="皖南拍摄地地图"></div>
+        <p id="mapStatus" class="muted">
+          GPS 拍摄位置 · 底图需要网络，地点目录可离线使用。
+        </p>
+        <div id="places" class="places"></div>
+      </dialog>
+      <aside id="editor" hidden>
+        <div class="dialog-top">
+          <h2>校准连接方向</h2>
+          <button id="closeEditor" aria-label="关闭方向校准">×</button>
+        </div>
+        <p>
+          GPS
+          确定邻近关系；相机航向未必等于全景朝向。拖动全景，把目标位置放在画面中心，再保存。
+        </p>
+        <label>目标拍摄点<select id="edgeSelect"></select></label
+        ><button id="aim" class="primary">将连接对准画面中心 ⌖</button>
+        <p id="calibrationStatus" class="muted"></p>
+        <button id="export">导出校准 JSON ↓</button
+        ><label class="import"
+          >导入校准 JSON<input
+            id="import"
+            type="file"
+            accept="application/json,.json" /></label
+        ><button id="resetCalibration">清除此连接的校准</button>
+      </aside>
+      <div id="toast" role="status" hidden></div>
     </div>
-    <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  </div>
-  <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.7/build/pannellum.js"></script>
-  <script type="module" src="./src/main.js"></script>
-</body>
+    <script type="module" src="/src/main.js"></script>
+  </body>
 </html>
