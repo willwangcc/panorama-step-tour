@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.vercel/
+.DS_Store
+.env
+.env.*
+!.env.example
+# Original drone imagery may total several GB; do not commit.
+originals/
+raw/
+assets/raw/
+input/
+inputs/
+photos/
+*.DNG
+# Locally produced audit reports can expose precise flight GPS.
+reports/
