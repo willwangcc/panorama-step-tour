@@ -15,3 +15,6 @@ photos/
 *.DNG
 # Locally produced audit reports can expose precise flight GPS.
 reports/
+
+# Reproducible local media and precise spatial manifest
+public/generated/
