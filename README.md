@@ -14,6 +14,16 @@ This is the standalone evolution of [Demo Gallery's Panorama Step Tour](https://
 
 **Boundary:** This is a connected multi-viewpoint *photo tour*, not photogrammetric 3D reconstruction. Sequential links are guesses until coordinates/bearings are reviewed.
 
+## Local DJI photo audit
+
+Run on your Mac after providing the source folder to Codex:
+
+```bash
+npm run audit:photos -- "/absolute/path/to/黟县"
+```
+
+This **does not upload, resize, modify or commit** any original image. It writes ignored local `reports/audit.json` and `reports/audit.csv` with sizes, aspect ratios, geographic filename groups and GPano/XMP clues. Optional `exiftool` (install separately if you want detailed GPS/altitude/heading metadata) enriches the same report. Treat a 2:1 JPEG as a **candidate**, not automatically verified 360° imagery. Keep generated reports private because they can contain exact GPS.
+
 ## Development
 
 Requires Node.js 20+.
