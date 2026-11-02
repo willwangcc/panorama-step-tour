@@ -22,6 +22,26 @@ assert.ok(
   ),
 );
 const expected = new Map(files.map((f) => [f.url, f]));
+// A Range request must never poison the proxy's subsequent complete response.
+const probe = `${base}/generated/p-6c8a6232e020.jpg?range-probe=${Date.now()}`;
+const partial = await fetch(probe, {
+  headers: { Range: "bytes=0-65535" },
+  signal: AbortSignal.timeout(45000),
+});
+assert.ok(partial.status === 200 || partial.status === 206);
+await partial.arrayBuffer();
+const complete = await fetch(probe, { signal: AbortSignal.timeout(45000) });
+assert.equal(
+  complete.status,
+  200,
+  "Range response contaminated a complete image request",
+);
+assert.equal(
+  createHash("sha256")
+    .update(Buffer.from(await complete.arrayBuffer()))
+    .digest("hex"),
+  expected.get("/generated/p-6c8a6232e020.jpg").sha256,
+);
 const tasks = m.viewpoints.flatMap((n) =>
   Object.keys(variants).map((variant) => ({ variant, url: n[variant] })),
 );
@@ -33,18 +53,19 @@ async function worker() {
       entry = expected.get(url.split("?")[0]);
     assert.ok(entry);
     const r = await fetch(base + url, {
-      headers: { Range: "bytes=0-65535" },
       signal: AbortSignal.timeout(45000),
     });
-    assert.ok(r.status === 200 || r.status === 206, `${url}: HTTP ${r.status}`);
+    assert.equal(r.status, 200, `${url}: expected complete image`);
     const buf = Buffer.from(await r.arrayBuffer()),
       meta = await sharp(buf).metadata();
     assert.deepEqual([meta.width, meta.height], variants[variant], url);
-    const size =
-      r.status === 206
-        ? Number(r.headers.get("content-range")?.split("/").at(-1))
-        : buf.length;
+    const size = buf.length;
     assert.equal(size, entry.bytes, url + " byte size");
+    assert.equal(
+      createHash("sha256").update(buf).digest("hex"),
+      entry.sha256,
+      url + " byte identity",
+    );
     verified.push({
       url,
       status: r.status,

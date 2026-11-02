@@ -61,7 +61,9 @@ const routes = [
     src: "^/generated/(p-[a-f0-9]{12}(?:-mobile)?\\.jpg)$",
     dest: `${config.origin}/${config.prefix}/$1`,
     headers: {
-      "Cache-Control": "public, max-age=0, s-maxage=86400, must-revalidate",
+      "Cache-Control": "public, max-age=86400",
+      "CDN-Cache-Control": "no-store",
+      "Vercel-CDN-Cache-Control": "no-store",
     },
   },
   {
