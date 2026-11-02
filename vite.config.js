@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { publicManifest } from "./scripts/lib/media.mjs";
+import { publicManifest, inspectMedia } from "./scripts/lib/media.mjs";
 // A normal static build must not publish audit metadata or the incremental cache.
 export default {
   plugins: [
@@ -15,7 +15,11 @@ export default {
           );
           await fs.writeFile(
             path.join(dir, "manifest.json"),
-            JSON.stringify(publicManifest(source), null, 2) + "\n",
+            JSON.stringify(
+              publicManifest(source, await inspectMedia("public")),
+              null,
+              2,
+            ) + "\n",
           );
           await fs.rm(path.join(dir, "cache.json"), { force: true });
         } catch (error) {

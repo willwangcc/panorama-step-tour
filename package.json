@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "node scripts/ensure-media.mjs && vite",
+    "build": "node scripts/ensure-media.mjs && vite build",
     "preview": "vite preview",
     "check": "npm run test && npm run build",
     "audit:photos": "node scripts/audit-photos.mjs",
@@ -18,7 +18,9 @@
     "build:production": "node scripts/build-production.mjs",
     "deploy:production": "npm run build:production && npx vercel deploy --prebuilt --prod",
     "test:hd": "node scripts/verify-hd-browser.mjs",
-    "verify:production": "node scripts/verify-production.mjs"
+    "verify:production": "node scripts/verify-production.mjs",
+    "setup:media": "node scripts/ensure-media.mjs",
+    "package:media": "node scripts/package-media.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",

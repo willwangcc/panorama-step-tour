@@ -31,7 +31,9 @@ export function publicManifest(source, inventory) {
     schemaVersion: source.schemaVersion,
     title: source.title,
     generatedAt: source.generatedAt,
-    ...(inventory ? { mediaRevision: inventory.revision } : {}),
+    ...(inventory || source.mediaRevision
+      ? { mediaRevision: inventory?.revision ?? source.mediaRevision }
+      : {}),
     places: source.places,
     viewpoints: source.viewpoints.map((n) =>
       Object.fromEntries(
@@ -79,7 +81,7 @@ export async function inspectMedia(root = "public") {
       "Desktop and mobile must use distinct resources",
     );
     for (const [variant, dimensions] of Object.entries(variants)) {
-      const url = n[variant];
+      const url = n[variant].split("?")[0];
       assert.ok(!seen.has(url), "Duplicate media URL");
       seen.add(url);
       const file = mediaPath(root, url),

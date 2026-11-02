@@ -38,3 +38,13 @@ The former manual prebuilt output resized images to 3072 × 1536 and reused the 
 Public Manifest image URLs include byte-derived version queries to bypass cached 3072 artifacts. The stable desktop/mobile endpoints still return the intended full-resolution variants. The 31 place records and 85 edge records are copied without changes; private audit/EXIF data stays local. Git deployment is disabled because Git intentionally contains no generated photographs; use the explicit prebuilt production command.
 
 Production validation also caught a proxy cache hazard: forcing shared `s-maxage` on external image rewrites could cache a 206 Range response and return it to a subsequent full GET. Rewrites now bypass the intermediary shared cache while retaining browser caching and Blob's native CDN. The production verifier downloads full images and compares SHA-256, rather than treating a partial header response as a successful full resource.
+
+## Portable GitHub-backed deployments (current default)
+
+`deployment/github-media.json` pins a public GitHub Release archive containing all 213 optimized JPEGs and a sanitized Manifest. `npm run build` and `npm run dev` first execute `scripts/ensure-media.mjs`. Existing verified media is reused; a fresh clone streams the archive to temporary disk, verifies its exact size and SHA-256, validates archive entry paths, extracts and checks every image dimension/hash, then installs `public/generated/` with the Manifest copied last. No secret, original photo directory or Blob store is needed.
+
+A normal Vite build includes the entire 336.1 MiB dataset in `dist/`. The publish plugin retains the public content revision, versions media URLs and strips private fields. Each imported deployment hosts its own panorama files at the same origin. `vercel.json` enables Git deployments with `npm run build` and `dist` output. The optional original-author Blob/prebuilt scripts remain available but are not used by this default flow.
+
+Media is distributed as a GitHub Release attachment rather than inflating code history. `scripts/package-media.mjs` packages only the allowlisted web derivatives and public Manifest; it never reads DJI originals. Publishing new media requires uploading its archive before committing the corresponding pinned download configuration. GitHub's existing source-check workflow skips the large download; the Vercel build provides the full deployment check.
+
+The archive uses seven ≤48 MiB transport parts, uploaded/downloaded in parallel. Each part and the reassembled archive have pinned SHA-256 checksums; extraction and all JPEG validation happen only after those checks pass. Fork owners do not need to merge anything manually.
