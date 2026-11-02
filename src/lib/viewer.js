@@ -1,17 +1,21 @@
 import "pannellum/build/pannellum.js";
 import "pannellum/build/pannellum.css";
 import { wrap } from "./spatial.js";
-export function createViewer(
+import { createPanoramaCache } from "./panorama-cache.js";
+export async function createViewer(
   manifest,
   first,
   corrections,
   onNavigate,
   onLoad,
   onError,
+  onProgress,
 ) {
   const mobile = matchMedia("(max-width: 700px)").matches;
   const nodes = new Map(manifest.viewpoints.map((n) => [n.id, n]));
   const sceneConfig = {};
+  const sourceUrls = new Map();
+  const cache = createPanoramaCache(4);
   const hotspot = (e) => {
     const c = corrections[e.id],
       yaw = c?.yaw ?? e.yaw;
@@ -50,6 +54,13 @@ export function createViewer(
         .map(hotspot)
         .filter(Boolean),
     };
+  for (const [id, scene] of Object.entries(sceneConfig))
+    sourceUrls.set(id, scene.panorama);
+  sceneConfig[first].panorama = await cache.load(
+    sourceUrls.get(first),
+    onProgress,
+  );
+  window.addEventListener("pagehide", () => cache.clear(), { once: true });
   const viewer = window.pannellum.viewer("panorama", {
     default: {
       firstScene: first,
@@ -68,7 +79,11 @@ export function createViewer(
   viewer.on("error", onError);
   return {
     viewer,
-    url: (id) => sceneConfig[id].panorama,
+    url: (id) => sourceUrls.get(id),
+    async prepare(id, progress) {
+      sceneConfig[id].panorama = await cache.load(sourceUrls.get(id), progress);
+      viewer.addScene(id, sceneConfig[id]);
+    },
     refreshEdge(e) {
       try {
         viewer.removeHotSpot(e.id, e.from);
@@ -87,23 +102,4 @@ export function createViewer(
       viewer.loadScene(id, viewer.getPitch(), yaw, viewer.getHfov());
     },
   };
-}
-export function preload(url, onProgress) {
-  return new Promise((resolve, reject) => {
-    const req = new XMLHttpRequest();
-    req.open("GET", url);
-    req.responseType = "blob";
-    req.timeout = 45000;
-    req.onprogress = (e) =>
-      onProgress(
-        e.lengthComputable ? Math.round((e.loaded / e.total) * 100) : null,
-      );
-    req.onload = () =>
-      req.status === 200
-        ? resolve()
-        : reject(new Error(`图片请求失败 (${req.status})`));
-    req.onerror = () => reject(new Error("图片读取失败，请检查本地服务器。"));
-    req.ontimeout = () => reject(new Error("图片加载超时，请重试。"));
-    req.send();
-  });
 }

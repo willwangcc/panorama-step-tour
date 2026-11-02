@@ -28,3 +28,11 @@ All runtime libraries are bundled locally; only map tiles require Internet. No b
 31 place labels come from filenames and include nearby sublocations; they are not claimed to be 31 independently verified administrative villages. Missing links are intentional when points exceed limits. First version uses optimized single-resolution images with small previews, not tiled multiresolution. Physical iPhone Safari and human visual calibration remain unverified.
 
 Pannellum API reference: https://pannellum.org/documentation/api/
+
+## HD release and cache regression guard
+
+The former manual prebuilt output resized images to 3072 × 1536 and reused the desktop URL for mobile. Production now uses `scripts/build-production.mjs` and `scripts/upload-media.mjs`: strict 6144/4096 dimension and metadata checks → byte-preserving content-addressed Blob upload → one static build with thumbnails and public-field-only Manifest → same-origin CDN rewrites → HTTP and browser JPEG verification. The 100 MB Hobby CLI upload cap applies to the small app package; no panorama resampling is part of deployment.
+
+`src/lib/panorama-cache.js` keeps four compressed image blobs. The initial scene and requested destinations use one progress-reporting request each; Pannellum renders object URLs. Revisiting a retained scene causes no additional network request. Evicted scenes can still use browser HTTP caching, but a later visit may revalidate/download. The cache releases blobs at page exit. It retains no decoded panorama textures beyond the active viewer.
+
+Public Manifest image URLs include byte-derived version queries to bypass cached 3072 artifacts. The stable desktop/mobile endpoints still return the intended full-resolution variants. The 31 place records and 85 edge records are copied without changes; private audit/EXIF data stays local. Git deployment is disabled because Git intentionally contains no generated photographs; use the explicit prebuilt production command.

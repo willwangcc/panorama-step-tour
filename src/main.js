@@ -1,5 +1,5 @@
 import "./style.css";
-import { createViewer, preload } from "./lib/viewer.js";
+import { createViewer } from "./lib/viewer.js";
 import { createExplorer } from "./lib/explorer.js";
 const $ = (id) => document.getElementById(id);
 const storageKey = "anhui-calibration-v1";
@@ -104,8 +104,8 @@ async function navigate(id, edge, { back = false } = {}) {
   const previous = current;
   loading(`正在载入 ${node(id).title}…`);
   try {
-    await preload(
-      engine.url(id),
+    await engine.prepare(
+      id,
       (p) =>
         ($("loadingText").textContent =
           `正在载入 ${node(id).title}${p == null ? "…" : ` · ${p}%`}`),
@@ -324,7 +324,7 @@ async function start() {
       };
       $("places").append(b);
     }
-    engine = createViewer(
+    engine = await createViewer(
       manifest,
       current,
       corrections,
@@ -336,6 +336,9 @@ async function start() {
         $("error").hidden = true;
       },
       (message) => error(String(message).replace(/<[^>]*>/g, "")),
+      (progress) =>
+        ($("loadingText").textContent =
+          `正在载入高清全景${progress == null ? "…" : ` · ${progress}%`}`),
     );
     render();
   } catch (e) {

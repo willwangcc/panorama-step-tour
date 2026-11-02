@@ -13,10 +13,16 @@
     "prepare:media": "npm run audit:photos && npm run process:photos",
     "test": "node --test tests/*.test.mjs",
     "verify:media": "node scripts/verify-media.mjs",
-    "test:browser": "node scripts/browser-check.mjs"
+    "test:browser": "node scripts/browser-check.mjs",
+    "upload:media": "node scripts/upload-media.mjs",
+    "build:production": "node scripts/build-production.mjs",
+    "deploy:production": "npm run build:production && npx vercel deploy --prebuilt --prod",
+    "test:hd": "node scripts/verify-hd-browser.mjs",
+    "verify:production": "node scripts/verify-production.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
+    "@vercel/blob": "2.4.0",
     "prettier": "^3.9.10",
     "vite": "^7.1.0"
   },

@@ -41,4 +41,30 @@ npm run test:browser
 
 Browser checks cover actual imagery, hotspot navigation, drag/zoom, fullscreen, calibration round-trip, regional/local switching, mobile viewport/touch, no initial eager panorama fetch, all 213 image URLs and uncaught JS errors. Mobile testing uses Chromium iPhone emulation, not physical iPhone Safari.
 
-No deployment or raw-photo upload is part of this project setup. Multiresolution tiles and visually verified north calibration remain future improvements.
+Production uses the explicit prebuilt release below; raw photographs are never uploaded. Multiresolution tiles and visually verified north calibration remain future improvements.
+
+## High-resolution production release
+
+Production media must remain **6144 × 3072 desktop / 4096 × 2048 mobile**. A deployment verifier rejects the former 3072px artifact and rejects desktop/mobile URLs pointing at the same file. The viewer selects one variant at startup, fetches only the current scene, and keeps the last four compressed JPEG blobs so preloading/rendering/revisiting share one download.
+
+Hobby's 100 MB CLI upload limit is handled with Vercel Blob, not image downsampling. The existing derivatives are uploaded byte-for-byte under a content-derived prefix. The 142 panorama objects use ~335 MiB of Blob storage; 71 unchanged thumbnails ship with the static app. Hobby Blob includes 1 GB storage and 10 GB monthly transfer; exceeding free limits may make media unavailable until the quota resets. No paid plan is required by this workflow.
+
+```sh
+# Existing project must be southern-anhui. Credentials stay in ignored .env.local.
+npx vercel project inspect --non-interactive
+npx vercel env pull .env.local
+npm run verify:media
+npm run upload:media        # reuses unchanged objects, never reads the DJI originals
+npm run check
+npm run test:hd             # localhost server must be running
+npm run build:production   # verify CDN objects, rebuild and validate .vercel/output
+npx vercel deploy --prebuilt --prod
+npm run verify:production
+TOUR_URL=https://wannan-360.vercel.app npm run test:hd
+```
+
+`deployment/media.json` contains only the public CDN origin and content revision. The production builder copies existing thumbnails, strips local paths/EXIF audit fields from the Manifest and writes CDN rewrites for the existing `/generated/*.jpg` paths. Image URLs carry content hashes to invalidate the old blurry cache. The stable unversioned desktop URL still returns the full 6144px image. The deploy step does not run a second remote application build.
+
+Git-triggered Vercel deployments are disabled in `vercel.json`: generated imagery is intentionally absent from Git, so production releases use the verified prebuilt pipeline above. GitHub's existing build check is unchanged.
+
+Root cause: the previous manually prepared `.vercel/output` contained resized 3072px images and redirected mobile Manifest entries to those same files; neither the checked-in processing script nor Vite requested that downsampling. Checking HTTP status alone missed the quality regression. The new checks measure actual JPEG dimensions and compare production bytes to local source derivatives.
