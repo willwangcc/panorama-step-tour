@@ -68,8 +68,18 @@ await expect(page.locator("#calibrationStatus")).toContainText("手动方向");
 await page.click("#resetCalibration");
 await page.click("#closeEditor");
 await page.click("#explore");
-assert.equal(await page.locator("#places button").count(), 31);
-await page.getByRole("button", { name: "齐云山 · 6", exact: true }).click();
+assert.equal(
+  await page.locator("#places button").count(),
+  (
+    await (
+      await page.request.get("http://127.0.0.1:5173/generated/manifest.json")
+    ).json()
+  ).places.length,
+);
+await page
+  .locator("#places")
+  .getByRole("button", { name: "探索齐云山", exact: true })
+  .click();
 await page.locator("#loading").waitFor({ state: "hidden" });
 assert.equal(await page.locator("#sceneTitle").textContent(), "齐云山");
 await page
@@ -113,7 +123,10 @@ await cdp.send("Input.dispatchTouchEvent", {
 await phone.click("#next");
 await phone.locator("#loading").waitFor({ state: "hidden" });
 await phone.click("#explore");
-await phone.getByRole("button", { name: "碧山 · 6", exact: true }).click();
+await phone
+  .locator("#places")
+  .getByRole("button", { name: "探索碧山", exact: true })
+  .click();
 await phone.locator("#loading").waitFor({ state: "hidden" });
 assert.equal(await phone.locator("#sceneTitle").textContent(), "碧山");
 const manifest = await (

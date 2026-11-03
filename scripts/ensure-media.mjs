@@ -27,7 +27,6 @@ try {
   );
   const temp = await fs.mkdtemp(path.join(os.tmpdir(), "anhui-media-"));
   try {
-    const archive = path.join(temp, "media.tar.gz");
     async function download(part, destination) {
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {
@@ -64,72 +63,83 @@ try {
         }
       }
     }
-    if (config.parts?.length) {
-      let next = 0,
-        complete = 0;
-      async function worker() {
-        while (next < config.parts.length) {
-          const i = next++;
-          await download(config.parts[i], path.join(temp, `part-${i}`));
-          console.log(
-            `Media parts verified ${++complete}/${config.parts.length}`,
-          );
+    // Apply immutable base and additions in order; the last manifest describes the complete tour.
+    for (const [batch, bundle] of (config.bundles || [config]).entries()) {
+      const archive = path.join(temp, `media-${batch}.tar.gz`);
+      if (bundle.parts?.length) {
+        let next = 0,
+          complete = 0;
+        async function worker() {
+          while (next < bundle.parts.length) {
+            const i = next++;
+            await download(bundle.parts[i], path.join(temp, `part-${i}`));
+            console.log(
+              `Media parts verified ${++complete}/${bundle.parts.length}`,
+            );
+          }
         }
-      }
-      await Promise.all([worker(), worker(), worker()]);
-      async function* chunks() {
-        for (let i = 0; i < config.parts.length; i++)
-          for await (const chunk of createReadStream(
-            path.join(temp, `part-${i}`),
-          ))
-            yield chunk;
-      }
-      const hash = createHash("sha256");
-      let total = 0;
-      await pipeline(
-        Readable.from(chunks()),
-        new Transform({
-          transform(chunk, encoding, done) {
-            total += chunk.length;
-            hash.update(chunk);
-            done(null, chunk);
+        await Promise.all([worker(), worker(), worker()]);
+        async function* chunks() {
+          for (let i = 0; i < bundle.parts.length; i++)
+            for await (const chunk of createReadStream(
+              path.join(temp, `part-${i}`),
+            ))
+              yield chunk;
+        }
+        const hash = createHash("sha256");
+        let total = 0;
+        await pipeline(
+          Readable.from(chunks()),
+          new Transform({
+            transform(chunk, encoding, done) {
+              total += chunk.length;
+              hash.update(chunk);
+              done(null, chunk);
+            },
+          }),
+          createWriteStream(archive),
+        );
+        assert.equal(
+          total,
+          bundle.archiveBytes,
+          "Combined archive size mismatch",
+        );
+        assert.equal(
+          hash.digest("hex"),
+          bundle.sha256,
+          "Combined archive checksum mismatch",
+        );
+      } else {
+        await download(
+          {
+            url: bundle.url,
+            bytes: bundle.archiveBytes,
+            sha256: bundle.sha256,
           },
-        }),
-        createWriteStream(archive),
-      );
-      assert.equal(
-        total,
-        config.archiveBytes,
-        "Combined archive size mismatch",
-      );
-      assert.equal(
-        hash.digest("hex"),
-        config.sha256,
-        "Combined archive checksum mismatch",
-      );
-    } else {
-      await download(
-        { url: config.url, bytes: config.archiveBytes, sha256: config.sha256 },
-        archive,
-      );
+          archive,
+        );
+      }
+      const list = spawnSync("tar", ["-tzf", archive], {
+        encoding: "utf8",
+        maxBuffer: 1048576,
+      });
+      if (list.status !== 0)
+        throw Error("Cannot read media archive: " + list.stderr);
+      for (const name of list.stdout.trim().split("\n"))
+        assert.match(
+          name,
+          /^generated\/(?:manifest\.json|p-[a-f0-9]{12}(?:-mobile|-thumb)?\.jpg)?$/,
+          "Unexpected archive entry",
+        );
+      const extract = spawnSync("tar", ["-xzf", archive, "-C", temp], {
+        encoding: "utf8",
+      });
+      if (extract.status !== 0)
+        throw Error("Cannot extract media archive: " + extract.stderr);
+      await fs.rm(archive);
+      for (let i = 0; i < (bundle.parts?.length || 0); i++)
+        await fs.rm(path.join(temp, `part-${i}`));
     }
-    const list = spawnSync("tar", ["-tzf", archive], {
-      encoding: "utf8",
-      maxBuffer: 1048576,
-    });
-    if (list.status !== 0)
-      throw Error("Cannot read media archive: " + list.stderr);
-    for (const name of list.stdout.trim().split("\n"))
-      assert.match(
-        name,
-        /^generated\/(?:manifest\.json|p-[a-f0-9]{12}(?:-mobile|-thumb)?\.jpg)?$/,
-        "Unexpected archive entry",
-      );
-    const extract = spawnSync("tar", ["-xzf", archive, "-C", temp], {
-      encoding: "utf8",
-    });
-    if (extract.status !== 0)
-      throw Error("Cannot extract media archive: " + extract.stderr);
     const inventory = await inspectMedia(temp);
     assert.equal(
       inventory.revision,
@@ -137,6 +147,12 @@ try {
       "Extracted media revision mismatch",
     );
     assert.equal(inventory.files.length, config.resources);
+    for (const key of ["viewpoints", "places", "edges"])
+      assert.equal(
+        inventory.source[key].length,
+        config[key],
+        `${key} count mismatch`,
+      );
     await fs.mkdir("public/generated", { recursive: true });
     for (const file of inventory.files)
       await fs.copyFile(

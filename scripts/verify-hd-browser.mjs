@@ -85,7 +85,10 @@ try {
   );
   await page.click("#rotate");
   await page.click("#explore");
-  await page.getByRole("button", { name: "宏村 · 6", exact: true }).click();
+  await page
+    .locator("#places")
+    .getByRole("button", { name: "探索宏村", exact: true })
+    .click();
   await ready(page);
   await page
     .getByRole("button", { name: "切换到 宏村 · 02", exact: true })
@@ -149,7 +152,10 @@ try {
     touchPoints: [],
   });
   await phone.click("#explore");
-  await phone.getByRole("button", { name: "碧山 · 6", exact: true }).click();
+  await phone
+    .locator("#places")
+    .getByRole("button", { name: "探索碧山", exact: true })
+    .click();
   await ready(phone);
   await phone
     .getByRole("button", { name: "切换到 碧山 · 02", exact: true })

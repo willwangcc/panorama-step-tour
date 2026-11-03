@@ -63,15 +63,33 @@ export async function inspectMedia(root = "public") {
   const source = JSON.parse(
     await fs.readFile(path.join(root, "generated/manifest.json"), "utf8"),
   );
-  assert.equal(source.places.length, 31, "Expected unchanged 31 places");
-  assert.equal(source.viewpoints.length, 71, "Expected unchanged 71 panoramas");
-  assert.equal(
-    source.edges.length,
-    85,
-    "Expected unchanged 85 directed connections",
+  assert.ok(
+    source.places.length > 0 && source.viewpoints.length > 0,
+    "Empty tour",
   );
   const ids = new Set(source.viewpoints.map((n) => n.id));
-  assert.equal(ids.size, 71);
+  assert.equal(ids.size, source.viewpoints.length, "Duplicate viewpoint ID");
+  const placeIds = new Set(source.places.map((p) => p.id));
+  assert.equal(placeIds.size, source.places.length, "Duplicate place ID");
+  const membership = new Set();
+  for (const place of source.places) {
+    assert.ok(place.viewpoints.length > 0, "Empty place");
+    for (const id of place.viewpoints) {
+      assert.ok(!membership.has(id), "Viewpoint in multiple places");
+      membership.add(id);
+      assert.equal(
+        source.viewpoints.find((n) => n.id === id)?.placeId,
+        place.id,
+        "Invalid place membership",
+      );
+    }
+  }
+  assert.equal(membership.size, ids.size, "Unlisted viewpoint");
+  assert.equal(
+    new Set(source.edges.map((e) => e.id)).size,
+    source.edges.length,
+    "Duplicate edge ID",
+  );
   const files = [],
     seen = new Set();
   for (const n of source.viewpoints) {

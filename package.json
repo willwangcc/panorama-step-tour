@@ -20,7 +20,8 @@
     "test:hd": "node scripts/verify-hd-browser.mjs",
     "verify:production": "node scripts/verify-production.mjs",
     "setup:media": "node scripts/ensure-media.mjs",
-    "package:media": "node scripts/package-media.mjs"
+    "package:media": "node scripts/package-media.mjs",
+    "test:import": "node scripts/verify-import-browser.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",

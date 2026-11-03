@@ -1,48 +1,80 @@
 {
-  "schemaVersion": 1,
-  "revision": "b4288d6b981748df2e64",
-  "archiveBytes": 348554295,
-  "sha256": "716f12c0f4d0ca1cb4e982f9252f6af6ca6f11c428d1ee40f1c461f74fffe55e",
-  "resources": 213,
-  "viewpoints": 71,
-  "places": 31,
-  "edges": 85,
-  "archiveName": "southern-anhui-hd-b4288d6b981748df2e64.tar.gz",
-  "parts": [
+  "schemaVersion": 2,
+  "revision": "947dc7d116bde35b4b6e",
+  "bundles": [
     {
-      "url": "https://github.com/willwangcc/panorama-step-tour/releases/download/media-hd-v1/southern-anhui-hd-b4288d6b981748df2e64.tar.gz.part01",
-      "bytes": 50331648,
-      "sha256": "9fe8a23469080aca7ac2b31cda9cc0ad5070be6651e700e7c1a997f8a78ea5c0"
+      "archiveName": "southern-anhui-hd-b4288d6b981748df2e64.tar.gz",
+      "parts": [
+        {
+          "url": "https://github.com/willwangcc/panorama-step-tour/releases/download/media-hd-v1/southern-anhui-hd-b4288d6b981748df2e64.tar.gz.part01",
+          "bytes": 50331648,
+          "sha256": "9fe8a23469080aca7ac2b31cda9cc0ad5070be6651e700e7c1a997f8a78ea5c0"
+        },
+        {
+          "url": "https://github.com/willwangcc/panorama-step-tour/releases/download/media-hd-v1/southern-anhui-hd-b4288d6b981748df2e64.tar.gz.part02",
+          "bytes": 50331648,
+          "sha256": "e7ea40575bc940c93921a78f12662010558fa10a143a188d8317db20bf9e5b55"
+        },
+        {
+          "url": "https://github.com/willwangcc/panorama-step-tour/releases/download/media-hd-v1/southern-anhui-hd-b4288d6b981748df2e64.tar.gz.part03",
+          "bytes": 50331648,
+          "sha256": "d3bee833275a86717350e90d74215b8a0d80dae865aba6a0e8de6ab95d04234d"
+        },
+        {
+          "url": "https://github.com/willwangcc/panorama-step-tour/releases/download/media-hd-v1/southern-anhui-hd-b4288d6b981748df2e64.tar.gz.part04",
+          "bytes": 50331648,
+          "sha256": "9e129e0d1f4713ebbfd8223392bd634703a4ac85b94a6c3d8362374ab0b4caa4"
+        },
+        {
+          "url": "https://github.com/willwangcc/panorama-step-tour/releases/download/media-hd-v1/southern-anhui-hd-b4288d6b981748df2e64.tar.gz.part05",
+          "bytes": 50331648,
+          "sha256": "ea9f40ceb4920509b9461afcea80cd29a6934c1b71817365caef3c05f8100580"
+        },
+        {
+          "url": "https://github.com/willwangcc/panorama-step-tour/releases/download/media-hd-v1/southern-anhui-hd-b4288d6b981748df2e64.tar.gz.part06",
+          "bytes": 50331648,
+          "sha256": "cff23dee8938fc46c82c93e4abbcfb2d4e9d7aecadef73e3fac69fe9b422ebfa"
+        },
+        {
+          "url": "https://github.com/willwangcc/panorama-step-tour/releases/download/media-hd-v1/southern-anhui-hd-b4288d6b981748df2e64.tar.gz.part07",
+          "bytes": 46564407,
+          "sha256": "268df7d5983cedba8427318ea5362ed77be3e5dbe7698a15f945b4cd1415595f"
+        }
+      ],
+      "archiveBytes": 348554295,
+      "sha256": "716f12c0f4d0ca1cb4e982f9252f6af6ca6f11c428d1ee40f1c461f74fffe55e"
     },
     {
-      "url": "https://github.com/willwangcc/panorama-step-tour/releases/download/media-hd-v1/southern-anhui-hd-b4288d6b981748df2e64.tar.gz.part02",
-      "bytes": 50331648,
-      "sha256": "e7ea40575bc940c93921a78f12662010558fa10a143a188d8317db20bf9e5b55"
-    },
-    {
-      "url": "https://github.com/willwangcc/panorama-step-tour/releases/download/media-hd-v1/southern-anhui-hd-b4288d6b981748df2e64.tar.gz.part03",
-      "bytes": 50331648,
-      "sha256": "d3bee833275a86717350e90d74215b8a0d80dae865aba6a0e8de6ab95d04234d"
-    },
-    {
-      "url": "https://github.com/willwangcc/panorama-step-tour/releases/download/media-hd-v1/southern-anhui-hd-b4288d6b981748df2e64.tar.gz.part04",
-      "bytes": 50331648,
-      "sha256": "9e129e0d1f4713ebbfd8223392bd634703a4ac85b94a6c3d8362374ab0b4caa4"
-    },
-    {
-      "url": "https://github.com/willwangcc/panorama-step-tour/releases/download/media-hd-v1/southern-anhui-hd-b4288d6b981748df2e64.tar.gz.part05",
-      "bytes": 50331648,
-      "sha256": "ea9f40ceb4920509b9461afcea80cd29a6934c1b71817365caef3c05f8100580"
-    },
-    {
-      "url": "https://github.com/willwangcc/panorama-step-tour/releases/download/media-hd-v1/southern-anhui-hd-b4288d6b981748df2e64.tar.gz.part06",
-      "bytes": 50331648,
-      "sha256": "cff23dee8938fc46c82c93e4abbcfb2d4e9d7aecadef73e3fac69fe9b422ebfa"
-    },
-    {
-      "url": "https://github.com/willwangcc/panorama-step-tour/releases/download/media-hd-v1/southern-anhui-hd-b4288d6b981748df2e64.tar.gz.part07",
-      "bytes": 46564407,
-      "sha256": "268df7d5983cedba8427318ea5362ed77be3e5dbe7698a15f945b4cd1415595f"
+      "archiveName": "southern-anhui-hd-947dc7d116bde35b4b6e.tar.gz",
+      "parts": [
+        {
+          "url": "https://github.com/willwangcc/panorama-step-tour/releases/download/media-20261102/southern-anhui-hd-947dc7d116bde35b4b6e.tar.gz.part01",
+          "bytes": 50331648,
+          "sha256": "78acce759d38eca908b919078a5ca0d6486379f1b560e7efb80231f8861c67b2"
+        },
+        {
+          "url": "https://github.com/willwangcc/panorama-step-tour/releases/download/media-20261102/southern-anhui-hd-947dc7d116bde35b4b6e.tar.gz.part02",
+          "bytes": 50331648,
+          "sha256": "9ceccae7917bf8aa928786392c8b25484677bb443e7afeeb56c2388bdc17079b"
+        },
+        {
+          "url": "https://github.com/willwangcc/panorama-step-tour/releases/download/media-20261102/southern-anhui-hd-947dc7d116bde35b4b6e.tar.gz.part03",
+          "bytes": 50331648,
+          "sha256": "dd7b8ba50bb63f6f4261ca0d9fb474d6e7c1308f68ee71441dd38b70a319f0b9"
+        },
+        {
+          "url": "https://github.com/willwangcc/panorama-step-tour/releases/download/media-20261102/southern-anhui-hd-947dc7d116bde35b4b6e.tar.gz.part04",
+          "bytes": 20681497,
+          "sha256": "1576199ad83c0c82cdd621442c64335a12cb7784336cbb168854f59da3072ca8"
+        }
+      ],
+      "archiveBytes": 171676441,
+      "sha256": "655dfe4e4485277cc761830a1c27e0934312bc0218cbb6019c2a579a8c67174c"
     }
-  ]
+  ],
+  "archiveBytes": 520230736,
+  "resources": 303,
+  "viewpoints": 101,
+  "places": 48,
+  "edges": 101
 }

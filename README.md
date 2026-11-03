@@ -2,7 +2,7 @@
 
 Southern Anhui — A Spatial Journey. Real DJI aerial panoramas, built with Vite, Pannellum and Leaflet.
 
-[Deploy to Vercel](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fwillwangcc%2Fpanorama-step-tour) · [Live experience](https://wannan-360.vercel.app) · [HD media on GitHub](https://github.com/willwangcc/panorama-step-tour/releases/tag/media-hd-v1)
+[Deploy to Vercel](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fwillwangcc%2Fpanorama-step-tour) · [Live experience](https://wannan-360.vercel.app) · [HD media on GitHub](https://github.com/willwangcc/panorama-step-tour/releases/tag/media-20261102)
 
 ## Deploy directly from this repository
 
@@ -14,11 +14,11 @@ Fork or import this repository into Vercel. No environment variables, Blob accou
 - Output directory: `dist`.
 - Node.js: 22 or newer; standard `tar` executable (available in Vercel builds).
 
-The build downloads seven parts of the pinned public GitHub Release archive in parallel, combines them, verifies every part and the complete archive with SHA-256, and checks the dimensions of all 213 JPEGs, then includes the imagery in the static website. Each deployment serves its own media under `/generated/`; there is no runtime dependency on the original owner's Vercel Blob store. Git deployments are enabled.
+The build downloads the pinned public GitHub Release bundles in order (the original base plus the November 2 additions). It downloads each bundle’s parts in parallel, verifies each part and complete archive with SHA-256, applies the latest complete Manifest, and checks all 303 JPEGs before including the imagery in the static website. Each deployment serves its own media under `/generated/`; there is no runtime dependency on the original owner's Vercel Blob store. Git deployments are enabled.
 
-The release contains 71 desktop panoramas at **6144 × 3072**, 71 mobile panoramas at **4096 × 2048**, 71 thumbnails at **480 × 240**, and a sanitized runtime Manifest. There are **31 places, 71 viewpoints and 85 directed spatial connections**. Extracted media totals **336.1 MiB**; the download is about **332.4 MiB**. First builds take longer while downloading. Verified local media is reused on subsequent runs.
+The release contains 101 desktop panoramas at **6144 × 3072**, 101 mobile panoramas at **4096 × 2048**, 101 thumbnails at **480 × 240**, and a sanitized runtime Manifest. There are **48 places, 101 viewpoints and 101 directed spatial connections**. Extracted media totals **501.4 MiB**; the download is about **496.1 MiB**. First builds take longer while downloading. Verified local media is reused on subsequent runs.
 
-The images are GitHub **Release assets**, rather than objects in Git history. This keeps cloning the code repository small while making the full-resolution dataset publicly available. `deployment/github-media.json` pins the part URLs and checksums, combined archive size, content revision and SHA-256. Forks intentionally use this public upstream release until their owner publishes another dataset and updates that file.
+The images are GitHub **Release assets**, rather than objects in Git history. This keeps cloning the code repository small while making the full-resolution dataset publicly available. `deployment/github-media.json` pins each bundle’s part URLs, sizes and checksums, plus the final content revision and dataset counts. Forks intentionally use this public upstream release until their owner publishes another dataset and updates that file.
 
 ## Run locally
 
@@ -48,7 +48,7 @@ If the release cannot be downloaded or fails integrity checks, the build fails w
 - Hash URLs identify viewpoints. Back follows visit history; nearest advances to a qualifying neighboring viewpoint.
 - OSM map tiles need Internet. All panorama media is served by the deployed website itself.
 
-All photographs have GPS, but no reliable GPano north heading. Gimbal yaw remains an explicitly unverified estimate. Place names are derived from filenames, including nearby sublocations. Multi-resolution tiles and visually verified north calibration remain future improvements.
+All photographs have GPS, but no reliable GPano north heading. Gimbal yaw remains an explicitly unverified estimate. Place names are derived from filenames, with explicit viewpoint-to-place aliases in `data/import-place-aliases.json`. The 30 panoramas captured on November 2 add 17 place groups; all original 71 viewpoints and 85 connections are retained. Multi-resolution tiles and visually verified north calibration remain future improvements.
 
 ## Author-only original-media pipeline
 
@@ -57,10 +57,22 @@ Original SD-card files are read-only and are never included in the release. The 
 ```sh
 npm run audit:photos -- "/Volumes/EOS_DIGITAL/黟县"
 npm run process:photos
-npm run package:media
+npm run package:media -- --tag YOUR_RELEASE_TAG
 ```
 
-The audit JSON/CSV and private processing metadata stay in ignored `reports/`. Local derivatives, incremental cache and manifests stay in ignored `public/generated/`. `package:media` creates a sanitized archive, seven transport parts and checksum in `reports/github-media/`; publish them to the matching GitHub Release before pushing a changed download configuration.
+The audit JSON/CSV and private processing metadata stay in ignored `reports/`. Local derivatives, incremental cache and manifests stay in ignored `public/generated/`. `package:media -- --tag YOUR_RELEASE_TAG` creates a sanitized archive, ≤48 MiB transport parts and checksum in `reports/github-media/`; publish them to the matching GitHub Release before pushing a changed download configuration.
+
+To add another batch without replacing existing scenes:
+
+```sh
+# Preserve the complete manifest before the import (local ignored file).
+cp public/generated/manifest.json reports/before-import.json
+npm run audit:photos -- "/path/to/new/photos"
+npm run process:photos
+npm run package:media -- --tag YOUR_NEW_RELEASE_TAG --base-manifest reports/before-import.json
+```
+
+Processing upserts by stable photo ID and keeps earlier batches. The alias file groups clearly labeled views of the same place without changing original filenames or GPS. Imports with any failed photo retain the previous Manifest. Incremental packaging verifies that all base image bytes are unchanged, then packages only the additions with the full merged Manifest. Publish the new Release parts and checksum **before** committing the new config; retain all referenced base releases. Do not run `build` or `dev` between processing and packaging: until its config is updated, media setup restores the previously pinned dataset.
 
 Processing preserves the 2:1 projection, uses bounded Sharp memory/concurrency and reuses successful outputs for unchanged originals. Unknown projections are recorded without stretching them into false spheres. macOS resource forks are excluded.
 
@@ -77,6 +89,8 @@ npm run test:hd
 # Check your own deployment:
 TOUR_URL=https://your-site.vercel.app npm run verify:production
 TOUR_URL=https://your-site.vercel.app npm run test:hd
+# Exercise every new viewpoint through the scene UI:
+TOUR_URL=https://your-site.vercel.app npm run test:import -- --date 2026:11:02
 ```
 
 Checks measure actual JPEG dimensions, metadata stripping, scene navigation, desktop/mobile resource selection, cache reuse and uncaught browser errors. Production verification compares full response hashes with the local derivatives. Mobile tests use Chromium iPhone emulation, not physical iPhone Safari.

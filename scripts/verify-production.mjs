@@ -15,7 +15,7 @@ const m = await response.json();
 assert.equal(m.mediaRevision, revision);
 assert.deepEqual(m.edges, source.edges);
 assert.deepEqual(m.places, source.places);
-assert.equal(m.viewpoints.length, 71);
+assert.equal(m.viewpoints.length, source.viewpoints.length);
 assert.ok(
   !/SourceFile|filename|projectionMetadata|\/Volumes\/|\/Users\/|metadata/.test(
     JSON.stringify(m),
@@ -103,9 +103,9 @@ const result = {
     height: meta.height,
     bytes: buffer.length,
   },
-  places: 31,
-  viewpoints: 71,
-  edges: 85,
+  places: source.places.length,
+  viewpoints: source.viewpoints.length,
+  edges: source.edges.length,
   resources: verified.length,
   totalBytes,
   revision,

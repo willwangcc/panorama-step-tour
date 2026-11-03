@@ -61,7 +61,12 @@ function placeButton(place, className = "place-tile") {
   const label = document.createElement("span");
   label.textContent = `${place.name} · ${place.viewpoints.length} 个视角`;
   button.append(img, label);
-  button.onclick = () => navigate(place.viewpoints[0]);
+  button.onclick = () => {
+    if (place.viewpoints[0] === current) {
+      enter();
+      $("explorer").close();
+    } else navigate(place.viewpoints[0]);
+  };
   return button;
 }
 function openExplorer() {

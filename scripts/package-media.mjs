@@ -2,13 +2,61 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import assert from "node:assert/strict";
+import { parseArgs } from "node:util";
 import { createHash } from "node:crypto";
 import { inspectMedia, publicManifest, mediaPath } from "./lib/media.mjs";
+const { values } = parseArgs({
+  options: {
+    tag: { type: "string" },
+    "base-manifest": { type: "string" },
+  },
+});
+assert.match(
+  values.tag || "",
+  /^[a-zA-Z0-9][a-zA-Z0-9._-]+$/,
+  "Pass --tag RELEASE_TAG",
+);
 const inventory = await inspectMedia();
+const previous = JSON.parse(
+  await fs.readFile("deployment/github-media.json", "utf8"),
+);
+let files = inventory.files;
+if (values["base-manifest"]) {
+  const base = JSON.parse(await fs.readFile(values["base-manifest"], "utf8"));
+  const urls = new Set(
+    base.viewpoints.flatMap((n) =>
+      [n.panorama, n.mobile, n.thumbnail].map((u) => u.split("?")[0]),
+    ),
+  );
+  const retained = inventory.files.filter((f) => urls.has(f.url));
+  assert.equal(
+    retained.length,
+    urls.size,
+    "Base media removed; use full package",
+  );
+  const revision = createHash("sha256")
+    .update(
+      retained
+        .map((f) => `${f.url}:${f.sha256}`)
+        .sort()
+        .join("\n"),
+    )
+    .digest("hex")
+    .slice(0, 20);
+  assert.equal(
+    revision,
+    previous.revision,
+    "Base media changed; use full package",
+  );
+  files = inventory.files.filter((f) => !urls.has(f.url));
+  assert.ok(files.length, "No new media to package");
+}
 const root = "reports/github-media",
   dir = path.join(root, "bundle/generated");
+await fs.rm(path.dirname(dir), { recursive: true, force: true });
 await fs.mkdir(dir, { recursive: true });
-for (const f of inventory.files)
+for (const f of files)
   await fs.copyFile(
     mediaPath("public", f.url),
     path.join(dir, path.basename(f.url)),
@@ -39,22 +87,39 @@ for (
   const bytes = data.subarray(offset, offset + 48 * 1048576);
   await fs.writeFile(path.join(root, name), bytes);
   parts.push({
-    url: `https://github.com/willwangcc/panorama-step-tour/releases/download/media-hd-v1/${name}`,
+    url: `https://github.com/willwangcc/panorama-step-tour/releases/download/${values.tag}/${name}`,
     bytes: bytes.length,
     sha256: createHash("sha256").update(bytes).digest("hex"),
   });
 }
-const config = {
-  schemaVersion: 1,
-  revision: inventory.revision,
+const bundle = {
   archiveName: filename,
   parts,
   archiveBytes: data.length,
   sha256,
-  resources: 213,
-  viewpoints: 71,
-  places: 31,
-  edges: 85,
+};
+const bundles = values["base-manifest"]
+  ? [
+      ...(previous.bundles || [
+        {
+          archiveName: previous.archiveName,
+          parts: previous.parts,
+          archiveBytes: previous.archiveBytes,
+          sha256: previous.sha256,
+        },
+      ]),
+      bundle,
+    ]
+  : [bundle];
+const config = {
+  schemaVersion: 2,
+  revision: inventory.revision,
+  bundles,
+  archiveBytes: bundles.reduce((sum, b) => sum + b.archiveBytes, 0),
+  resources: inventory.files.length,
+  viewpoints: inventory.source.viewpoints.length,
+  places: inventory.source.places.length,
+  edges: inventory.source.edges.length,
 };
 await fs.writeFile(
   "deployment/github-media.json",
