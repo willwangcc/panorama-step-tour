@@ -36,7 +36,7 @@
         <div class="eyebrow">山水之间，另一个视角</div>
         <h1>在皖南，<br />换个角度<span>看世界。</span></h1>
         <p>Southern Anhui — A Spatial Journey</p>
-        <div class="intro-bottom">
+        <div class="landing-discovery" aria-label="探索皖南地点"><div class="landing-discovery-top"><span>探索皖南</span><button id="allPlaces" type="button">全部地点 →</button></div><div id="featuredPlaces" class="featured-places"></div></div><div class="intro-bottom">
           <button id="enter" class="primary">进入漫游 <span>→</span></button
           ><span id="counts">正在读取影像档案</span>
         </div>
@@ -60,7 +60,7 @@
             ><button id="calibrate">校准方向 ⌖</button>
           </div>
           <div id="rail" class="rail" aria-label="当前地点拍摄点"></div>
-          <div class="route-bottom">
+          <div class="next-place"><div class="next-place-copy"><span class="next-place-kicker">继续探索 · 另一处风景</span><strong id="nextPlaceName"></strong></div><button id="nextPlace" type="button">下一站 →</button><button id="otherPlaces" type="button" class="other-places">其他地点</button></div><div class="route-bottom">
             <button id="back" aria-label="返回上个拍摄点">← 返回</button>
             <div id="neighbors"></div>
             <button id="next" aria-label="前往最近拍摄点">邻近 →</button>
@@ -93,7 +93,7 @@
         <p id="mapStatus" class="muted">
           GPS 拍摄位置 · 底图需要网络，地点目录可离线使用。
         </p>
-        <div id="places" class="places"></div>
+        <label class="place-search-label" for="placeSearch">寻找地点</label><input id="placeSearch" type="search" placeholder="搜索地点名称" autocomplete="off" /><div id="places" class="places"></div><p id="placeEmpty" class="muted" hidden>没有找到匹配的地点。</p>
       </dialog>
       <aside id="editor" hidden>
         <div class="dialog-top">
