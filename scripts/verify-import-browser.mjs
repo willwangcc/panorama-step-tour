@@ -2,7 +2,6 @@
 import { chromium, devices, expect } from "@playwright/test";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
-import sharp from "sharp";
 import { parseArgs } from "node:util";
 const { values } = parseArgs({ options: { date: { type: "string" } } });
 assert.match(
@@ -38,8 +37,38 @@ try {
         : { viewport: { width: 1440, height: 900 } },
     );
     const page = await context.newPage(),
-      pending = [],
       requests = [];
+    // Decode the actual XHR blob before it can be evicted from CDP's body buffer.
+    await page.addInitScript(() => {
+      const open = XMLHttpRequest.prototype.open;
+      window.panoramaChecks = [];
+      XMLHttpRequest.prototype.open = function (method, url, ...args) {
+        if (
+          /\/generated\/p-[a-f0-9]+(?:-mobile)?\.jpg(?:\?|$)/.test(String(url))
+        ) {
+          this.addEventListener(
+            "load",
+            () => {
+              const status = this.status;
+              const check = createImageBitmap(this.response).then((image) => {
+                const dimensions = {
+                  url: String(url),
+                  status,
+                  width: image.width,
+                  height: image.height,
+                };
+                image.close();
+                return dimensions;
+              });
+              check.catch(() => {}); // Awaited below; avoid an early unhandled rejection.
+              window.panoramaChecks.push(check);
+            },
+            { once: true },
+          );
+        }
+        return open.call(this, method, url, ...args);
+      };
+    });
     page.on("pageerror", (e) => errors.push(e.message));
     page.on("console", (m) => {
       if (m.type() === "error") errors.push(m.text());
@@ -51,19 +80,6 @@ try {
     page.on("response", (r) => {
       if (r.url().startsWith(base) && r.status() >= 400)
         bad.push({ url: r.url(), status: r.status() });
-      if (/\/generated\/p-[a-f0-9]+(?:-mobile)?\.jpg(?:\?|$)/.test(r.url()))
-        pending.push(
-          (async () => {
-            const bytes = await r.body(),
-              meta = await sharp(bytes).metadata();
-            assert.equal(r.status(), 200);
-            assert.deepEqual(
-              [meta.width, meta.height],
-              mobile ? [4096, 2048] : [6144, 3072],
-            );
-            assert.equal(r.url().includes("-mobile.jpg"), mobile);
-          })(),
-        );
     });
     await page.goto(`${base}/#${nodes[0].id}`);
     await ready(page);
@@ -97,17 +113,32 @@ try {
         assert.equal(new URL(page.url()).hash, `#${id}`);
         visited++;
       }
+      console.log(
+        `${mobile ? "Mobile" : "Desktop"}: ${place.name}, ${visited} viewpoints verified`,
+      );
       if (visited <= 4)
         await page.screenshot({
           path: `reports/import-20261102/${tag}-${mobile ? "mobile" : "desktop"}-${place.id}.png`,
         });
     }
-    await Promise.all(pending);
+    const images = await page.evaluate(() =>
+      Promise.all(window.panoramaChecks),
+    );
+    assert.equal(images.length, requests.length);
+    for (const image of images) {
+      assert.equal(image.status, 200);
+      assert.deepEqual(
+        [image.width, image.height],
+        mobile ? [4096, 2048] : [6144, 3072],
+      );
+      assert.equal(image.url.includes("-mobile.jpg"), mobile);
+    }
     results.push({
       mobile,
       places: selected.length,
       viewpoints: visited,
       requests: requests.length,
+      images,
     });
     await context.close();
   }
