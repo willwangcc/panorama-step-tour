@@ -1,11 +1,12 @@
 // Place-level recommendations are independent of GPS aerial-viewpoint edges.
 // Prefer a small curated journey; fall back to the manifest's stable place order.
-export const curatedJourney = ["hongcun", "bishan", "pingshan", "qiyunshan"];
+// Match stable display names; runtime IDs are generated from photo metadata.
+export const curatedJourney = ["宏村", "碧山", "屏山", "齐云山"];
 
 export function orderedPlaces(places) {
-  const rank = new Map(curatedJourney.map((id, index) => [id, index]));
+  const rank = new Map(curatedJourney.map((name, index) => [name, index]));
   return places.filter(p => p.viewpoints?.length).slice().sort((a, b) =>
-    (rank.get(a.id) ?? Infinity) - (rank.get(b.id) ?? Infinity) ||
+    (rank.get(a.name) ?? Infinity) - (rank.get(b.name) ?? Infinity) ||
     places.indexOf(a) - places.indexOf(b));
 }
 
