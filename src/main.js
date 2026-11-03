@@ -1,6 +1,7 @@
 import "./style.css";
 import { createViewer } from "./lib/viewer.js";
 import { createExplorer } from "./lib/explorer.js";
+import { nextPlace, featuredPlaces } from "./lib/place-navigation.js";
 const $ = (id) => document.getElementById(id);
 const storageKey = "anhui-calibration-v1";
 let manifest,
@@ -10,7 +11,8 @@ let manifest,
   rotating = false,
   history = [],
   resizeMap,
-  loadTimer;
+  loadTimer,
+  featured = [];
 let corrections = {};
 try {
   corrections = JSON.parse(localStorage.getItem(storageKey) || "{}");
@@ -47,11 +49,41 @@ function enter() {
   rotating = false;
   $("rotate").setAttribute("aria-pressed", "false");
 }
+function placeButton(place, className = "place-tile") {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = className;
+  button.setAttribute("aria-label", `探索${place.name}`);
+  const img = document.createElement("img");
+  img.src = node(place.viewpoints[0]).thumbnail;
+  img.alt = "";
+  img.loading = "lazy";
+  const label = document.createElement("span");
+  label.textContent = `${place.name} · ${place.viewpoints.length} 个视角`;
+  button.append(img, label);
+  button.onclick = () => navigate(place.viewpoints[0]);
+  return button;
+}
+function openExplorer() {
+  if (!manifest) return;
+  $("explorer").showModal();
+  if (!resizeMap) resizeMap = createExplorer(manifest, (id) => {
+    if (id === current) {
+      enter();
+      $("explorer").close();
+    } else navigate(id);
+  });
+  setTimeout(resizeMap, 50);
+}
 function render() {
   const n = node(current),
     p = manifest.places.find((p) => p.id === n.placeId),
-    edges = outgoing();
+    edges = outgoing(),
+    recommended = nextPlace(manifest.places, p.id);
   $("sceneTitle").textContent = n.place;
+  $("nextPlaceName").textContent = recommended ? recommended.name : "探索全部地点";
+  $("nextPlace").textContent = recommended ? "下一站 →" : "查看地点 →";
+  $("nextPlace").onclick = () => recommended ? navigate(recommended.viewpoints[0]) : openExplorer();
   $("sceneIndex").textContent =
     `VIEWPOINT ${String(p.viewpoints.indexOf(n.id) + 1).padStart(2, "0")} / ${String(p.viewpoints.length).padStart(2, "0")}`;
   $("sceneMeta").textContent =
@@ -139,17 +171,18 @@ $("home").onclick = () => {
   $("app").classList.add("landing");
   $("editor").hidden = true;
 };
-$("explore").onclick = () => {
-  if (!manifest) return;
-  $("explorer").showModal();
-  if (!resizeMap)
-    resizeMap = createExplorer(manifest, (id) => {
-      if (id === current) {
-        enter();
-        $("explorer").close();
-      } else navigate(id);
-    });
-  setTimeout(resizeMap, 50);
+$("explore").onclick = openExplorer;
+$("allPlaces").onclick = openExplorer;
+$("otherPlaces").onclick = openExplorer;
+$("placeSearch").oninput = () => {
+  const query = $("placeSearch").value.trim().toLocaleLowerCase();
+  let visible = 0;
+  for (const button of $("places").children) {
+    const matches = button.dataset.name.toLocaleLowerCase().includes(query);
+    button.hidden = !matches;
+    if (matches) visible++;
+  }
+  $("placeEmpty").hidden = visible > 0;
 };
 document.querySelector("[data-close]").onclick = () => $("explorer").close();
 $("explorer").addEventListener("click", (e) => {
@@ -307,22 +340,12 @@ async function start() {
       manifest.viewpoints[0].id;
     $("counts").textContent =
       `${manifest.places.length} 个地点 / ${manifest.viewpoints.length} 个全景视角`;
+    featured = featuredPlaces(manifest.places, 3);
+    $("featuredPlaces").replaceChildren(...featured.map(p => placeButton(p, "featured-tile")));
     for (const p of manifest.places) {
-      const b = document.createElement("button"),
-        img = document.createElement("img"),
-        label = document.createElement("span");
-      img.src = node(p.viewpoints[0]).thumbnail;
-      img.alt = "";
-      img.loading = "lazy";
-      label.textContent = `${p.name} · ${p.viewpoints.length}`;
-      b.append(img, label);
-      b.onclick = () => {
-        if (current === p.viewpoints[0]) {
-          enter();
-          $("explorer").close();
-        } else navigate(p.viewpoints[0]);
-      };
-      $("places").append(b);
+      const button = placeButton(p);
+      button.dataset.name = p.name;
+      $("places").append(button);
     }
     engine = await createViewer(
       manifest,
